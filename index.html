@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Musical Matrix Birthday</title>
+    <title>Wedding</title>
     <style>
         body {
             margin: 0;
@@ -17,7 +17,6 @@
             display: block;
         }
 
-        /* Style cho nút phát nhạc */
         #startBtn {
             position: absolute;
             top: 50%;
@@ -63,7 +62,6 @@
 
     <audio id="bgMusic" loop>
         <source src="HPBDD.MP3" type="audio/mpeg">
-        Trình duyệt của bạn không hỗ trợ audio.
     </audio>
 
     <button id="startBtn">👰 T ♥️ H 🤵</button>
@@ -78,23 +76,21 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        // --- CẤU HÌNH ---
+        // 🟢 TỰ SCALE FONT THEO KÍCH THƯỚC THIẾT BỊ
         const CONFIG = {
             bgSpeed: 20,
             bgFade: 0.1,
             particleEase: 0.05,
-            textScale: 200,
+            textScale: Math.min(window.innerWidth * 0.12, window.innerHeight * 0.18),
             gap: 5
         };
 
         const chars = 'HAPPY WEDDING';
         const charArray = chars.split('');
 
-        // --- KHỞI TẠO ---
         const fontSize = 14;
         const columns = canvas.width / fontSize;
-        const drops = [];
-        for (let i = 0; i < columns; i++) drops[i] = 1;
+        const drops = Array.from({ length: columns }).map(() => 1);
 
         let particles = [];
 
@@ -102,6 +98,7 @@
             constructor(x, y) {
                 this.targetX = x;
                 this.targetY = y;
+
                 if (Math.random() > 0.5) {
                     this.x = Math.random() > 0.5 ? -50 : canvas.width + 50;
                     this.y = Math.random() * canvas.height;
@@ -129,59 +126,55 @@
                 ctx.shadowBlur = 0;
             }
 
-            changeTarget(newX, newY) {
-                this.targetX = newX;
-                this.targetY = newY;
+            changeTarget(x, y) {
+                this.targetX = x;
+                this.targetY = y;
             }
         }
 
+        // 🟢 HÀM CHỮ TÙY BIẾN & CĂN GIỮA CHUẨN
         function getTextCoordinates(text) {
             const bgCanvas = document.createElement('canvas');
             const bgCtx = bgCanvas.getContext('2d');
             bgCanvas.width = canvas.width;
             bgCanvas.height = canvas.height;
 
-            // Tự scale theo độ dài
             let baseSize = CONFIG.textScale;
+
+            // Auto scale theo độ dài chữ
             if (text.length > 5 && text.length <= 10) baseSize *= 0.9;
             if (text.length > 10) baseSize *= 0.7;
 
-            bgCtx.fillStyle = '#fff';
-            bgCtx.textAlign = 'center';
-            bgCtx.textBaseline = 'middle';
-
             const lines = text.split('\n');
 
-            // Kiểm tra đoạn đặc biệt cần giảm size dòng 2
+            // 🟢 Nhận diện dòng đặc biệt để làm bé dòng 2
             const isSpecial =
                 text.includes("TEAM BABIPRO") &&
                 text.includes("CHÚC HAI ANH CHỊ TRĂM NĂM HẠNH PHÚC");
 
-            let sizes = lines.map((_, index) => {
-                if (isSpecial) {
-                    return index === 0 ? baseSize : baseSize * 0.50;
-                }
-                return baseSize;
-            });
+            // Font từng dòng
+            let sizes = lines.map((_, index) =>
+                isSpecial ? (index === 0 ? baseSize : baseSize * 0.7) : baseSize
+            );
 
-            // 🔥 Tính tổng chiều cao thật (không lệch)
-            const totalHeight = sizes.reduce((sum, s) => sum + s, 0)
-                + (sizes.length - 1) * (baseSize * 0.3); // spacing nhỏ và chuẩn
+            bgCtx.textAlign = "center";
+            bgCtx.textBaseline = "middle";
+            bgCtx.fillStyle = "#fff";
 
-            // 🔥 Tính tọa độ Y bắt đầu sao cho block text nằm chính giữa
+            // 🔥 Tính block text nằm chính giữa canvas
+            const spacing = baseSize * 0.3;
+            const totalHeight = sizes.reduce((a, b) => a + b) + spacing * (sizes.length - 1);
             let currentY = canvas.height / 2 - totalHeight / 2;
 
-            // Vẽ chữ từng dòng
+            // Vẽ từng dòng
             lines.forEach((line, index) => {
-                const size = sizes[index];
-                bgCtx.font = `bold ${size}px Arial`;
-                bgCtx.fillText(line, canvas.width / 2, currentY + size / 2);
-                currentY += size + baseSize * 0.3;
+                bgCtx.font = `bold ${sizes[index]}px Arial`;
+                bgCtx.fillText(line, canvas.width / 2, currentY + sizes[index] / 2);
+                currentY += sizes[index] + spacing;
             });
 
-            // Lấy pixel đổi thành tọa độ
-            const imageData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
+            // Trích điểm pixel
+            const data = bgCtx.getImageData(0, 0, canvas.width, canvas.height).data;
             const coords = [];
 
             for (let y = 0; y < canvas.height; y += CONFIG.gap) {
@@ -191,20 +184,17 @@
                     }
                 }
             }
-
             return coords;
         }
 
-
-
         function initParticles(text) {
             const coords = getTextCoordinates(text);
+
             if (particles.length < coords.length) {
-                const diff = coords.length - particles.length;
-                for (let i = 0; i < diff; i++) {
-                    particles.push(new MatrixParticle(canvas.width / 2, canvas.height / 2));
-                }
+                let need = coords.length - particles.length;
+                while (need--) particles.push(new MatrixParticle(canvas.width / 2, canvas.height / 2));
             }
+
             particles.forEach((p, i) => {
                 if (i < coords.length) {
                     p.changeTarget(coords[i].x, coords[i].y);
@@ -223,7 +213,7 @@
             { text: "HAPPY WEDDING", time: 8000 },
             { text: "ANH THƯ\n❤️\n QUANG HUY", time: 8000 },
             { text: "04.01.2026", time: 8000 },
-            { text: "TEAM BABIPRO\n CHÚC HAI ANH CHỊ TRĂM NĂM HẠNH PHÚC", time: 10000 },
+            { text: "TEAM BABIPRO\nCHÚC HAI ANH CHỊ TRĂM NĂM HẠNH PHÚC", time: 10000 },
             { text: "MÃI IU HẸ HẸ HẸ", time: 8000 }
         ];
         let currentStep = 0;
@@ -240,68 +230,63 @@
         let lastTime = 0;
         const interval = 1000 / CONFIG.bgSpeed;
 
-        function draw(currentTime) {
+        function draw(t) {
             requestAnimationFrame(draw);
 
-            const deltaTime = currentTime - lastTime;
-            if (deltaTime < interval) return;
-            lastTime = currentTime - (deltaTime % interval);
+            if (t - lastTime < interval) return;
+            lastTime = t;
 
-            ctx.fillStyle = `rgba(0, 0, 0, ${CONFIG.bgFade})`;
+            ctx.fillStyle = `rgba(0,0,0,${CONFIG.bgFade})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = fontSize + 'px monospace';
+            ctx.font = fontSize + "px monospace";
 
-            // Vẽ nền mưa
+            // Mưa ký tự
             ctx.shadowBlur = 8;
-            ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-            for (let i = 0; i < drops.length; i++) {
+            ctx.shadowColor = "white";
+            drops.forEach((v, i) => {
                 const text = charArray[Math.floor(Math.random() * charArray.length)];
                 const x = i * fontSize;
-                const y = drops[i] * fontSize;
-                ctx.fillStyle = '#ffffff';
+                const y = v * fontSize;
+
+                ctx.fillStyle = "#ffffff";
                 ctx.fillText(text, x, y);
-                if (y > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
                 drops[i]++;
-            }
+
+                if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            });
             ctx.shadowBlur = 0;
 
-            // Vẽ chữ
+            // Vẽ chữ timeline
             particles.forEach(p => {
                 p.update();
-                if (p.color !== 'rgba(0,0,0,0)') {
-                    p.draw();
-                }
+                if (p.color !== "rgba(0,0,0,0)") p.draw();
             });
         }
 
-        // --- SỰ KIỆN NÚT BẤM ---
+        // 🟢 NÚT BẮT ĐẦU
         btn.addEventListener('click', () => {
 
-            // Chạy nền mưa ngay lập tức khi mở web
+            audio.play().catch(() => { });
+            audio.loop = true;   // nhạc lặp lại
+
+            btn.style.display = "none";
+
             draw(0);
 
-            // 1. Phát nhạc
-            audio.play().catch(e => console.log("Lỗi phát nhạc: ", e));
-
-            // 2. Ẩn nút
-            btn.style.display = 'none';
-
-            // 3. Đợi 3 giây rồi bắt đầu hiện chữ
             setTimeout(() => {
                 initParticles(timeline[0].text);
                 runTimeline();
-            }, 3000);
+            }, 2000);
         });
 
-
-
-        // Resize
-        window.addEventListener('resize', () => {
+        // 🟢 Resize → tự scale lại kích thước chữ
+        window.addEventListener("resize", () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            if (currentStep < timeline.length && btn.style.display === 'none') {
+
+            CONFIG.textScale = Math.min(window.innerWidth * 0.12, window.innerHeight * 0.18);
+
+            if (btn.style.display === "none") {
                 initParticles(timeline[currentStep].text);
             }
         });
