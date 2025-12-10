@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,9 +12,11 @@
             background: #000;
             font-family: 'Courier New', Courier, monospace;
         }
+
         canvas {
             display: block;
         }
+
         /* Style cho nút phát nhạc */
         #startBtn {
             position: absolute;
@@ -33,240 +36,277 @@
             font-weight: bold;
             animation: pulse 2s infinite;
         }
+
         #startBtn:hover {
             background: #ff69b4;
             color: white;
             box-shadow: 0 0 30px #ff69b4;
         }
+
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(255, 105, 180, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 105, 180, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(255, 105, 180, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 105, 180, 0);
+            }
         }
     </style>
 </head>
+
 <body>
 
-<audio id="bgMusic" loop>
-    <source src="HPBDD.MP3" type="audio/mpeg">
-    Trình duyệt của bạn không hỗ trợ audio.
-</audio>
+    <audio id="bgMusic" loop>
+        <source src="HPBDD.MP3" type="audio/mpeg">
+        Trình duyệt của bạn không hỗ trợ audio.
+    </audio>
 
-<button id="startBtn">Quà nèe hihi🎁</button>
-<canvas id="canvas"></canvas>
+    <button id="startBtn">👰 T ♥️ H 🤵</button>
+    <canvas id="canvas"></canvas>
 
-<script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const btn = document.getElementById('startBtn');
-    const audio = document.getElementById('bgMusic');
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const btn = document.getElementById('startBtn');
+        const audio = document.getElementById('bgMusic');
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    // --- CẤU HÌNH ---
-    const CONFIG = {
-        bgSpeed: 20,           
-        bgFade: 0.1,           
-        particleEase: 0.05,    
-        textScale: 100,        
-        gap: 5                 
-    };
-
-    const chars = 'HAPPYBIRTHDAYTOYOU';
-    const charArray = chars.split('');
-    
-    // --- KHỞI TẠO ---
-    const fontSize = 14;
-    const columns = canvas.width / fontSize;
-    const drops = [];
-    for (let i = 0; i < columns; i++) drops[i] = 1;
-
-    let particles = [];
-    
-    class MatrixParticle {
-        constructor(x, y) {
-            this.targetX = x;
-            this.targetY = y;
-            if (Math.random() > 0.5) {
-                this.x = Math.random() > 0.5 ? -50 : canvas.width + 50;
-                this.y = Math.random() * canvas.height;
-            } else {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() > 0.5 ? -50 : canvas.height + 50;
-            }
-            this.char = charArray[Math.floor(Math.random() * charArray.length)];
-            this.color = '#ff69b4'; 
-        }
-
-        update() {
-            this.x += (this.targetX - this.x) * CONFIG.particleEase;
-            this.y += (this.targetY - this.y) * CONFIG.particleEase;
-            if (Math.random() > 0.95) {
-                this.char = charArray[Math.floor(Math.random() * charArray.length)];
-            }
-        }
-
-        draw() {
-            ctx.fillStyle = this.color;
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#ff1493'; 
-            ctx.fillText(this.char, this.x, this.y);
-            ctx.shadowBlur = 0; 
-        }
-
-        changeTarget(newX, newY) {
-            this.targetX = newX;
-            this.targetY = newY;
-        }
-    }
-
-    function getTextCoordinates(text) {
-        const bgCanvas = document.createElement('canvas');
-        const bgCtx = bgCanvas.getContext('2d');
-        bgCanvas.width = canvas.width;
-        bgCanvas.height = canvas.height;
-
-        let size = CONFIG.textScale;
-        if (text.length > 5 && text.length <= 10) size = size * 0.9; 
-        if (text.length > 10) size = size * 0.7; 
-
-        bgCtx.font = `bold ${size}px Arial`;
-        bgCtx.fillStyle = '#fff';
-        bgCtx.textAlign = 'center';
-        bgCtx.textBaseline = 'middle';
-
-        const lines = text.split('\n');
-        const lineHeight = size * 1.0; 
-        const startY = (canvas.height - (lines.length - 1) * lineHeight) / 2;
-
-        lines.forEach((line, index) => {
-            bgCtx.fillText(line, canvas.width / 2, startY + (index * lineHeight));
-        });
-
-        const imageData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        const coords = [];
-
-        for (let y = 0; y < canvas.height; y += CONFIG.gap) {
-            for (let x = 0; x < canvas.width; x += CONFIG.gap) {
-                if (data[(y * canvas.width + x) * 4 + 3] > 128) {
-                    coords.push({ x, y });
-                }
-            }
-        }
-        return coords;
-    }
-
-    function initParticles(text) {
-        const coords = getTextCoordinates(text);
-        if (particles.length < coords.length) {
-            const diff = coords.length - particles.length;
-            for (let i = 0; i < diff; i++) {
-                particles.push(new MatrixParticle(canvas.width/2, canvas.height/2));
-            }
-        }
-        particles.forEach((p, i) => {
-            if (i < coords.length) {
-                p.changeTarget(coords[i].x, coords[i].y);
-                p.color = '#ff69b4'; 
-            } else {
-                p.changeTarget(Math.random() * canvas.width, Math.random() * canvas.height);
-                p.color = 'rgba(0,0,0,0)'; 
-            }
-        });
-    }
-
-    const timeline = [
-        { text: "3", time: 5500 },
-        { text: "2", time: 3500 },
-        { text: "1", time: 3500 },
-        { text: "HAPPY\nBIRTHDAY", time: 8000 },
-        { text: "VŨ PHƯƠNG MY", time: 8000 },
-        { text: "18-02\n2005", time: 5000 },
-        { text: "I LOVE\nYOU", time: 5000 },
-        { text: "HẸ HẸ HẸ", time: 5000 }
-    ];
-    let currentStep = 0;
-
-    function runTimeline() {
-        if (currentStep >= timeline.length) currentStep = 3; 
-        initParticles(timeline[currentStep].text);
-        setTimeout(() => {
-            currentStep++;
-            runTimeline();
-        }, timeline[currentStep].time);
-    }
-
-    let lastTime = 0;
-    const interval = 1000 / CONFIG.bgSpeed;
-
-    function draw(currentTime) {
-        requestAnimationFrame(draw);
-
-        const deltaTime = currentTime - lastTime;
-        if (deltaTime < interval) return;
-        lastTime = currentTime - (deltaTime % interval);
-
-        ctx.fillStyle = `rgba(0, 0, 0, ${CONFIG.bgFade})`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.font = fontSize + 'px monospace';
-
-        // Vẽ nền mưa
-        ctx.shadowBlur = 8;  
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)'; 
-        for (let i = 0; i < drops.length; i++) {
-            const text = charArray[Math.floor(Math.random() * charArray.length)];
-            const x = i * fontSize;
-            const y = drops[i] * fontSize;
-            ctx.fillStyle = '#ffffff'; 
-            ctx.fillText(text, x, y);
-            if (y > canvas.height && Math.random() > 0.975) {
-                drops[i] = 0;
-            }
-            drops[i]++;
-        }
-        ctx.shadowBlur = 0;
-
-        // Vẽ chữ
-        particles.forEach(p => {
-            p.update();
-            if (p.color !== 'rgba(0,0,0,0)') { 
-                p.draw();
-            }
-        });
-    }
-
-    // --- SỰ KIỆN NÚT BẤM ---
-    btn.addEventListener('click', () => {
-
-        // Chạy nền mưa ngay lập tức khi mở web
-        draw(0);
-
-        // 1. Phát nhạc
-        audio.play().catch(e => console.log("Lỗi phát nhạc: ", e));
-        
-        // 2. Ẩn nút
-        btn.style.display = 'none';
-
-        // 3. Đợi 3 giây rồi bắt đầu hiện chữ
-        setTimeout(() => {
-            initParticles(timeline[0].text);
-            runTimeline();
-        }, 3000);
-    });
-
-    
-
-    // Resize
-    window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        if (currentStep < timeline.length && btn.style.display === 'none') {
-            initParticles(timeline[currentStep].text);
-        }
-    });
 
-</script>
+        // --- CẤU HÌNH ---
+        const CONFIG = {
+            bgSpeed: 20,
+            bgFade: 0.1,
+            particleEase: 0.05,
+            textScale: 200,
+            gap: 5
+        };
+
+        const chars = 'HAPPY WEDDING';
+        const charArray = chars.split('');
+
+        // --- KHỞI TẠO ---
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        for (let i = 0; i < columns; i++) drops[i] = 1;
+
+        let particles = [];
+
+        class MatrixParticle {
+            constructor(x, y) {
+                this.targetX = x;
+                this.targetY = y;
+                if (Math.random() > 0.5) {
+                    this.x = Math.random() > 0.5 ? -50 : canvas.width + 50;
+                    this.y = Math.random() * canvas.height;
+                } else {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() > 0.5 ? -50 : canvas.height + 50;
+                }
+                this.char = charArray[Math.floor(Math.random() * charArray.length)];
+                this.color = '#ff69b4';
+            }
+
+            update() {
+                this.x += (this.targetX - this.x) * CONFIG.particleEase;
+                this.y += (this.targetY - this.y) * CONFIG.particleEase;
+                if (Math.random() > 0.95) {
+                    this.char = charArray[Math.floor(Math.random() * charArray.length)];
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#ff1493';
+                ctx.fillText(this.char, this.x, this.y);
+                ctx.shadowBlur = 0;
+            }
+
+            changeTarget(newX, newY) {
+                this.targetX = newX;
+                this.targetY = newY;
+            }
+        }
+
+        function getTextCoordinates(text) {
+            const bgCanvas = document.createElement('canvas');
+            const bgCtx = bgCanvas.getContext('2d');
+            bgCanvas.width = canvas.width;
+            bgCanvas.height = canvas.height;
+
+            // Tự scale theo độ dài
+            let baseSize = CONFIG.textScale;
+            if (text.length > 5 && text.length <= 10) baseSize *= 0.9;
+            if (text.length > 10) baseSize *= 0.7;
+
+            bgCtx.fillStyle = '#fff';
+            bgCtx.textAlign = 'center';
+            bgCtx.textBaseline = 'middle';
+
+            const lines = text.split('\n');
+
+            // Kiểm tra đoạn đặc biệt cần giảm size dòng 2
+            const isSpecial =
+                text.includes("TEAM BABIPRO") &&
+                text.includes("CHÚC HAI ANH CHỊ TRĂM NĂM HẠNH PHÚC");
+
+            let sizes = lines.map((_, index) => {
+                if (isSpecial) {
+                    return index === 0 ? baseSize : baseSize * 0.50;
+                }
+                return baseSize;
+            });
+
+            // 🔥 Tính tổng chiều cao thật (không lệch)
+            const totalHeight = sizes.reduce((sum, s) => sum + s, 0)
+                + (sizes.length - 1) * (baseSize * 0.3); // spacing nhỏ và chuẩn
+
+            // 🔥 Tính tọa độ Y bắt đầu sao cho block text nằm chính giữa
+            let currentY = canvas.height / 2 - totalHeight / 2;
+
+            // Vẽ chữ từng dòng
+            lines.forEach((line, index) => {
+                const size = sizes[index];
+                bgCtx.font = `bold ${size}px Arial`;
+                bgCtx.fillText(line, canvas.width / 2, currentY + size / 2);
+                currentY += size + baseSize * 0.3;
+            });
+
+            // Lấy pixel đổi thành tọa độ
+            const imageData = bgCtx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const coords = [];
+
+            for (let y = 0; y < canvas.height; y += CONFIG.gap) {
+                for (let x = 0; x < canvas.width; x += CONFIG.gap) {
+                    if (data[(y * canvas.width + x) * 4 + 3] > 128) {
+                        coords.push({ x, y });
+                    }
+                }
+            }
+
+            return coords;
+        }
+
+
+
+        function initParticles(text) {
+            const coords = getTextCoordinates(text);
+            if (particles.length < coords.length) {
+                const diff = coords.length - particles.length;
+                for (let i = 0; i < diff; i++) {
+                    particles.push(new MatrixParticle(canvas.width / 2, canvas.height / 2));
+                }
+            }
+            particles.forEach((p, i) => {
+                if (i < coords.length) {
+                    p.changeTarget(coords[i].x, coords[i].y);
+                    p.color = '#ff69b4';
+                } else {
+                    p.changeTarget(Math.random() * canvas.width, Math.random() * canvas.height);
+                    p.color = 'rgba(0,0,0,0)';
+                }
+            });
+        }
+
+        const timeline = [
+            { text: "3", time: 5500 },
+            { text: "2", time: 3500 },
+            { text: "1", time: 3500 },
+            { text: "HAPPY WEDDING", time: 8000 },
+            { text: "ANH THƯ\n❤️\n QUANG HUY", time: 8000 },
+            { text: "04.01.2026", time: 8000 },
+            { text: "TEAM BABIPRO\n CHÚC HAI ANH CHỊ TRĂM NĂM HẠNH PHÚC", time: 10000 },
+            { text: "MÃI IU HẸ HẸ HẸ", time: 8000 }
+        ];
+        let currentStep = 0;
+
+        function runTimeline() {
+            if (currentStep >= timeline.length) currentStep = 3;
+            initParticles(timeline[currentStep].text);
+            setTimeout(() => {
+                currentStep++;
+                runTimeline();
+            }, timeline[currentStep].time);
+        }
+
+        let lastTime = 0;
+        const interval = 1000 / CONFIG.bgSpeed;
+
+        function draw(currentTime) {
+            requestAnimationFrame(draw);
+
+            const deltaTime = currentTime - lastTime;
+            if (deltaTime < interval) return;
+            lastTime = currentTime - (deltaTime % interval);
+
+            ctx.fillStyle = `rgba(0, 0, 0, ${CONFIG.bgFade})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = fontSize + 'px monospace';
+
+            // Vẽ nền mưa
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            for (let i = 0; i < drops.length; i++) {
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(text, x, y);
+                if (y > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+            ctx.shadowBlur = 0;
+
+            // Vẽ chữ
+            particles.forEach(p => {
+                p.update();
+                if (p.color !== 'rgba(0,0,0,0)') {
+                    p.draw();
+                }
+            });
+        }
+
+        // --- SỰ KIỆN NÚT BẤM ---
+        btn.addEventListener('click', () => {
+
+            // Chạy nền mưa ngay lập tức khi mở web
+            draw(0);
+
+            // 1. Phát nhạc
+            audio.play().catch(e => console.log("Lỗi phát nhạc: ", e));
+
+            // 2. Ẩn nút
+            btn.style.display = 'none';
+
+            // 3. Đợi 3 giây rồi bắt đầu hiện chữ
+            setTimeout(() => {
+                initParticles(timeline[0].text);
+                runTimeline();
+            }, 3000);
+        });
+
+
+
+        // Resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (currentStep < timeline.length && btn.style.display === 'none') {
+                initParticles(timeline[currentStep].text);
+            }
+        });
+
+    </script>
 </body>
+
 </html>
