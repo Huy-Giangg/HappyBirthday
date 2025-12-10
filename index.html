@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delayed Glowing Matrix</title>
+    <title>Musical Matrix Birthday</title>
     <style>
         body {
             margin: 0;
@@ -14,38 +14,74 @@
         canvas {
             display: block;
         }
+        /* Style cho nút phát nhạc */
+        #startBtn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 20px;
+            background: transparent;
+            color: #ff69b4;
+            border: 2px solid #ff69b4;
+            cursor: pointer;
+            z-index: 100;
+            border-radius: 50px;
+            box-shadow: 0 0 15px #ff69b4;
+            transition: all 0.3s;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        #startBtn:hover {
+            background: #ff69b4;
+            color: white;
+            box-shadow: 0 0 30px #ff69b4;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 105, 180, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 105, 180, 0); }
+        }
     </style>
 </head>
 <body>
 
+<audio id="bgMusic" loop>
+    <source src="HPBDD.MP3" type="audio/mpeg">
+    Trình duyệt của bạn không hỗ trợ audio.
+</audio>
+
+<button id="startBtn">Quà nèe hihi🎁</button>
 <canvas id="canvas"></canvas>
 
 <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const btn = document.getElementById('startBtn');
+    const audio = document.getElementById('bgMusic');
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     // --- CẤU HÌNH ---
     const CONFIG = {
-        bgSpeed: 20,           // Tốc độ mưa rơi
-        bgFade: 0.1,           // Độ mờ đuôi
-        particleEase: 0.05,    // Tốc độ chữ bay vào
-        textScale: 200,        // Cỡ chữ
+        bgSpeed: 20,           
+        bgFade: 0.1,           
+        particleEase: 0.05,    
+        textScale: 100,        
         gap: 5                 
     };
 
     const chars = 'HAPPYBIRTHDAYTOYOU';
     const charArray = chars.split('');
     
-    // --- PHẦN 1: NỀN MƯA MATRIX ---
+    // --- KHỞI TẠO ---
     const fontSize = 14;
     const columns = canvas.width / fontSize;
     const drops = [];
     for (let i = 0; i < columns; i++) drops[i] = 1;
 
-    // --- PHẦN 2: CHỮ HỘI TỤ ---
     let particles = [];
     
     class MatrixParticle {
@@ -149,8 +185,7 @@
         { text: "VŨ PHƯƠNG MY", time: 8000 },
         { text: "18-02\n2005", time: 5000 },
         { text: "I LOVE\nYOU", time: 5000 },
-        { text: "HẸ HẸ HẸ", time: 5000 },
-        { text: "HẤP =))", time: 8000 }
+        { text: "HẸ HẸ HẸ", time: 5000 }
     ];
     let currentStep = 0;
 
@@ -173,33 +208,27 @@
         if (deltaTime < interval) return;
         lastTime = currentTime - (deltaTime % interval);
 
-        // Vẽ nền mờ
         ctx.fillStyle = `rgba(0, 0, 0, ${CONFIG.bgFade})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.font = fontSize + 'px monospace';
 
-        // Vẽ mưa phát sáng
+        // Vẽ nền mưa
         ctx.shadowBlur = 8;  
         ctx.shadowColor = 'rgba(255, 255, 255, 0.8)'; 
-
         for (let i = 0; i < drops.length; i++) {
             const text = charArray[Math.floor(Math.random() * charArray.length)];
             const x = i * fontSize;
             const y = drops[i] * fontSize;
-
             ctx.fillStyle = '#ffffff'; 
             ctx.fillText(text, x, y);
-
             if (y > canvas.height && Math.random() > 0.975) {
                 drops[i] = 0;
             }
             drops[i]++;
         }
-        
         ctx.shadowBlur = 0;
 
-        // Vẽ chữ chính
+        // Vẽ chữ
         particles.forEach(p => {
             p.update();
             if (p.color !== 'rgba(0,0,0,0)') { 
@@ -208,23 +237,32 @@
         });
     }
 
-    // --- PHẦN THAY ĐỔI: TRÌ HOÃN 3 GIÂY ---
+    // --- SỰ KIỆN NÚT BẤM ---
+    btn.addEventListener('click', () => {
+
+        // Chạy nền mưa ngay lập tức khi mở web
+        draw(0);
+
+        // 1. Phát nhạc
+        audio.play().catch(e => console.log("Lỗi phát nhạc: ", e));
+        
+        // 2. Ẩn nút
+        btn.style.display = 'none';
+
+        // 3. Đợi 3 giây rồi bắt đầu hiện chữ
+        setTimeout(() => {
+            initParticles(timeline[0].text);
+            runTimeline();
+        }, 3000);
+    });
+
     
-    // 1. Chạy background (mưa rơi) ngay lập tức
-    draw(0);
 
-    // 2. Đợi 3000ms (3 giây) rồi mới bắt đầu đếm ngược
-    setTimeout(() => {
-        initParticles(timeline[0].text);
-        runTimeline();
-    }, 6000);
-
-    // Xử lý Resize
+    // Resize
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        // Chỉ cập nhật nếu timeline đã bắt đầu chạy
-        if (currentStep < timeline.length) {
+        if (currentStep < timeline.length && btn.style.display === 'none') {
             initParticles(timeline[currentStep].text);
         }
     });
